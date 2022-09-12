@@ -67,7 +67,7 @@ defaultPar.ShowInfo = false;
 
 addRequired(p,'A_raw',@isnumeric);
 addRequired(p,'A_observed',@isnumeric);
-addRequired(p,'Mask',@(x) (isnumeric(x)||islogical(x)) && size(x)==size(A_observed));
+addRequired(p,'Mask',@(x) (isnumeric(x)||islogical(x)) && isequal(size(x),size(A_observed)));
 addRequired(p,'Lap',@(x) iscell(x) && length(x)==ndims(A_observed));
 addOptional(p,'maxiter',defaultPar.Maxiter,@isscalar);
 addOptional(p,'initmethod',defaultPar.InitialMethod,@(x) ismember(x,{'ttsvd','randomize'}));
@@ -88,7 +88,7 @@ end
 Size_A = size(A_observed);
 indnorm = 10^(ndims(A_observed)-1)/max( abs(reshape(A_observed,[],1)) );
 A_observed = A_observed.*indnorm;
-rse = zeros(1,maxiter+1);
+rse = zeros(1,Par.maxiter+1);
 [Lambda,Tau,Gcore] = VITTC_GH_init_graph_ind(A_observed,Mask,Lap,Par.maxrank,Par.initmethod);
 
 %% VI update
@@ -112,7 +112,7 @@ for i = 1:Par.maxiter
     if Par.show_info
         fprintf('rse between current and last update: %.9f\n',dist)
     end
-    if dist < thre_stop
+    if dist < Par.thre_stop
         if Par.show_info
             fprintf('-------------- GraphTT_VI converges --------------\n')
         end

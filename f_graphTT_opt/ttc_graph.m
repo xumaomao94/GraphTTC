@@ -61,13 +61,13 @@ p = inputParser;
 defaultPar.Maxiter = 100;
 defaultPar.InitialMethod = 'ttsvd';
 defaultPar.IterEndThre = 1e-8;
-defaultPar.UpdateMethod = 'fiber';
+defaultPar.UpdateMethod = 'fiber_als';
 defaultPar.ShowInfo = false;
 
 
 addRequired(p,'A_raw',@isnumeric);
 addRequired(p,'A_observed',@isnumeric);
-addRequired(p,'Mask',@(x) (isnumeric(x)||islogical(x)) && size(x)==size(A_observed));
+addRequired(p,'Mask',@(x) (isnumeric(x)||islogical(x)) && isequal(size(x),size(A_observed)));
 addRequired(p,'Lap',@(x) iscell(x) && length(x)==ndims(A_observed));
 addRequired(p,'beta',@(x) isnumeric(x) && (isscalar(x)||length(x)==ndims(A_observed)));
 addRequired(p,'rank_init',@(x) isnumeric(x) && length(x)==1+ndims(A_observed));
@@ -92,7 +92,7 @@ Size_A = size(A_observed);
 ndims_A = ndims(A_observed);
 indnorm = 1/max(A_observed(:));
 A_observed = A_observed.*indnorm;
-rse = zeros(1,num_of_iter+1);
+rse = zeros(1,Par.maxiter+1);
 
 [Gcore,X] = ttc_graph_init(A_observed,Mask,rank_init,Par.initmethod);
 R = zeros(1,ndims_A+1); % reload the ranks, in case the initial ranks are set larger than required
