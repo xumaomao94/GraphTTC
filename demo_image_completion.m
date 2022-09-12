@@ -52,10 +52,11 @@ for ell = 1:ndims(Y)
 end
 
 %% Perform graphTT-opt or graphTT-VI
-MethodName = 'graphTTvi'; % 'graphTTopt' for the optimization based methods
-
+% MethodName = 'graphTTvi'; % 'graphTTopt' for the optimization based methods
+MethodName = 'graphTTopt';
 if strcmp(MethodName,'graphTTvi')
     [A_completed] = VITTC_gh(Y,Y,Mask,Lap,...
+                                'maxiter',40,...
                                 'show_info',true);
 elseif strcmp(MethodName,'graphTTopt')
     beta_0 = 2;
@@ -65,15 +66,15 @@ elseif strcmp(MethodName,'graphTTopt')
 end
 
 %% Evaluate the performance
-rse = rse_score(X_VITT,X);
-psnr = psnr_score(X_VITT,X);
-ssim = ssim_index(rgb2gray(uint8(X_VITT)),rgb2gray(uint8(X)));
+rse = rse_score(A_completed,X);
+psnr = psnr_score(A_completed,X);
+ssim = ssim_index(rgb2gray(uint8(A_completed)),rgb2gray(uint8(X)));
 
 %% save the result
 figure;
 subplot(1,3,1); imshow(X./255);
 subplot(1,3,2); imshow(Y./255);
-subplot(1,3,3); imshow(X_VITT./255);
+subplot(1,3,3); imshow(A_completed./255);
 
 if IfNoiseOn
     save_name = sprintf('airplane_mr%d_noisy_%s.mat',missing_rate,MethodName);
