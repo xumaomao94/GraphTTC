@@ -62,7 +62,7 @@ defaultPar.Maxiter = 100;
 defaultPar.InitialMethod = 'ttsvd';
 defaultPar.MaxRank = 64;
 defaultPar.RankPruneThre = 1e-5;
-defaultPar.IterEndThre = 1e-7;
+defaultPar.IterEndThre = 1e-6;
 defaultPar.ShowInfo = false;
 
 addRequired(p,'A_raw',@isnumeric);

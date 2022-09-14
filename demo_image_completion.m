@@ -4,7 +4,7 @@ addpath(genpath('f_graphTT_vi'))
 addpath(genpath('f_graphTT_opt'))
 addpath('f_perfevaluate')
 addpath('TestImages')
-
+addpath('rely')
 
 %% Load the Image
 img_name = 'TestImages\airplane.mat';
@@ -56,7 +56,7 @@ end
 MethodName = 'graphTTopt';
 if strcmp(MethodName,'graphTTvi')
     [A_completed] = VITTC_gh(Y,Y,Mask,Lap,...
-                                'maxiter',40,...
+                                'maxiter',50,...
                                 'show_info',true);
 elseif strcmp(MethodName,'graphTTopt')
     beta_0 = 2;
