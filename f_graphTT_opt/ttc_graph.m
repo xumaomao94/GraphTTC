@@ -60,7 +60,7 @@ function [A_completed,Gcore,rse] = ttc_graph(A_raw,A_observed,Mask,Lap,beta,rank
 p = inputParser;
 defaultPar.Maxiter = 100;
 defaultPar.InitialMethod = 'ttsvd';
-defaultPar.IterEndThre = 1e-8;
+defaultPar.IterEndThre = 1e-6;
 defaultPar.UpdateMethod = 'fiber_als';
 defaultPar.ShowInfo = false;
 
