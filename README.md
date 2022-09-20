@@ -14,7 +14,7 @@ This is a matlab implemenation of the graph regularized tensor train completion,
 
     Includes functions implementing GraphTT-opt.
 
-    - ttc_graph
+    - ttc_graph.m
     
         Use this function to run GraphTT-opt.
 
@@ -22,7 +22,7 @@ This is a matlab implemenation of the graph regularized tensor train completion,
 
     Includes functions implementing GraphTT-VI.
     
-    - VITTC_gh
+    - VITTC_gh.m
     
         Use this function to run GraphTT-VI.
 
@@ -36,7 +36,7 @@ This is a matlab implemenation of the graph regularized tensor train completion,
 
 - TestImages/
 
-    A 'jellybeans' image, and a mask with 80% entries missing
+    An 'airplane' image.
 
 - ExperimentResults/
 
