@@ -20,8 +20,8 @@ function [lambda,tau,Gcore] = VITTC_GH_init_graph_ind(A_observed,Mask,Lap,maxran
     for i = 1:ndims_A-1
         [U,S,V] = svd(Aremain_M,'econ');
         R(i+1) = min(size(S,1),maxrank);
-        U = U*S.^(1/ndims_A);
-        S = S.^((ndims_A-1)/ndims_A);
+        U = U*S.^(1/(ndims_A-i+1));
+        S = S.^((ndims_A-i)/(ndims_A-i+1));
         Gcore.mean{i} = permute(reshape(U(:,1:R(i+1)),[R(i),Size_A(i),R(i+1)]),[1,3,2]);
         Aremain_M = reshape(S(1:R(i+1),1:R(i+1))*V(:,1:R(i+1))',[R(i+1)*Size_A(i+1),prod(Size_A(i+1:end))/Size_A(i+1)]);
     end

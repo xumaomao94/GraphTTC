@@ -20,6 +20,8 @@ function [Gcore,X] = ttc_graph_init(A_observed,Mask,rank_init,initmethod)
     for i = 1:ndims_A-1
         [U,S,V] = svd(Aremain_M,'econ');
         R(i+1) = min(size(S,1),R_init(i+1));
+        U = U*S.^(1/(ndims_A-i+1));
+        S = S.^((ndims_A-i)/(ndims_A-i+1));
         Gcore{i} = permute(reshape(U(:,1:R(i+1)),[R(i),Size_A(i),R(i+1)]),[1,3,2]);
         Aremain_M = reshape(S(1:R(i+1),1:R(i+1))*V(:,1:R(i+1))',[R(i+1)*Size_A(i+1),prod(Size_A(i+1:end))/Size_A(i+1)]);
     end
