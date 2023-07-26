@@ -35,7 +35,7 @@ function [A_completed,Gcore,rse] = ttc_graph(A_raw,A_observed,Mask,Lap,beta,rank
 % initmethod (default: 'ttsvd')
 %       -'ttsvd'-> use Gaussian random variables to fill in empty entries
 %       -'randomize'-> all entries are initialized by Gaussian variables
-% thre_stop (default: 1e-8)
+% thre_stop (default: 1e-6)
 %       stop the iteration when relative square error between current recovered tensor and
 %       last update is smaller than thre_stop
 % update_method (default: 'fiber_als')
@@ -115,7 +115,9 @@ end
 A_Ctemp = 0;
 for i = 1:Par.maxiter
     if Par.show_info
-        fprintf('The %d-th iteration; time: %f; ',i,toc)
+        if mod(i,20) == 1
+            fprintf('The %d-th iteration; time: %f; ',i,toc)
+        end
     end
     
     if strcmp(Par.update_method,'fiber_als')
@@ -138,7 +140,9 @@ for i = 1:Par.maxiter
 
     dist = sumsqr(A_completed-A_Ctemp)/sumsqr(A_completed);
     if Par.show_info
-        fprintf('rse between the current and last update: %.9f\n', dist)
+        if mod(i,20) == 1
+            fprintf('rse between the current and last update: %.9f\n', dist)
+        end
     end
     if dist < Par.thre_stop
         if Par.show_info
