@@ -90,7 +90,7 @@ end
 %% Initialization
 Size_A = size(A_observed);
 ndims_A = ndims(A_observed);
-indnorm = 1/max(abs(A_observed(:)));
+indnorm = 10^(ndims(A_observed)-1)/max( abs(reshape(A_observed,[],1)) );%1/max(abs(A_observed(:)));
 A_observed = A_observed.*indnorm;
 rse = zeros(1,Par.maxiter+1);
 

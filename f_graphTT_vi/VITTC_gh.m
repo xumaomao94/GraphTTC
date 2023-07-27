@@ -86,7 +86,7 @@ end
 
 %% initialization
 Size_A = size(A_observed);
-indnorm = 1/max(abs(A_observed(:)));%10^(ndims(A_observed)-1)/max( abs(reshape(A_observed,[],1)) );
+indnorm = 10^(ndims(A_observed)-1)/max( abs(reshape(A_observed,[],1)) );
 A_observed = A_observed.*indnorm;
 rse = zeros(1,Par.maxiter+1);
 [Lambda,Tau,Gcore] = VITTC_GH_init_graph_ind(A_observed,Mask,Lap,Par.maxrank,Par.initmethod);
