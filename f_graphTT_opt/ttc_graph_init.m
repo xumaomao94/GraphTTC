@@ -59,17 +59,17 @@ function [Gcore,X,beta_init,beta_equ] = ttc_graph_init(A_observed,Mask,rank_init
         weight(order) = sum(Gcore{order}(:).^2)/R(order)/R(order+1);
     end
             
-    if strcmp(initmethod,'fromVI') % this one is only for the test of reuse of beta obtained by graphTT-vi
-        beta_init = zeros(1,ndims_A);
-        for i = 1:length(beta_init)
-            beta_init(i) = majorvote(Lambda.meaninv{i}) ...
-                * majorvote(Lambda.meaninv{i+1}) / Tau.mean ...
-                * Tau.indnorm^(2/ndims_A - 2);
-        end
-        beta_init = beta_init ./ indnorm^(2/ndims_A-2);
-        beta_init = mean(beta_init).*ones(size(beta_init));
-        beta_equ = beta_init.*weight;
-    else
+%     if strcmp(initmethod,'fromVI') % this one is only for the test of reuse of beta obtained by graphTT-vi
+%         beta_init = zeros(1,ndims_A);
+%         for i = 1:length(beta_init)
+%             beta_init(i) = majorvote(Lambda.meaninv{i}) ...
+%                 * majorvote(Lambda.meaninv{i+1}) / Tau.mean ...
+%                 * Tau.indnorm^(2/ndims_A - 2);
+%         end
+%         beta_init = beta_init ./ indnorm^(2/ndims_A-2);
+%         beta_init = mean(beta_init).*ones(size(beta_init));
+%         beta_equ = beta_init.*weight;
+%     else
         if isscalar(beta) % set beta_0 only, get the beta_d according to that introduced in the reference paper
             beta_init = beta./weight;
             beta_equ = beta * ones(size(beta_init));
@@ -77,7 +77,7 @@ function [Gcore,X,beta_init,beta_equ] = ttc_graph_init(A_observed,Mask,rank_init
             beta_init = beta; % manually set all beta_d's
             beta_equ = beta.*weight;
         end
-    end
+%     end
     
     
 end
