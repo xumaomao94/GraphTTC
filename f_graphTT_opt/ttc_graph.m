@@ -1,4 +1,4 @@
-function [A_completed,Gcore,rse] = ttc_graph(A_raw,A_observed,Mask,Lap,beta,rank_init,varargin)
+function [A_completed,Gcore,rse,beta_equ] = ttc_graph(A_raw,A_observed,Mask,Lap,beta,rank_init,varargin)
 % ------------------------------------------------------
 % Graph Regularized Tensor Train Completion, solved under the BCD framework.
 % This code realizes the optimization method introduced in the following reference.
@@ -97,8 +97,8 @@ A_observed = A_observed.*indnorm;
 rse = zeros(1,Par.maxiter+1);
 
 
-[Gcore,X,beta_init] = ttc_graph_init(A_observed,Mask,rank_init,...
-            beta,indnorm,Lap,Par.initmethod);
+[Gcore,X,beta_init,beta_equ] = ttc_graph_init(A_observed,Mask,rank_init,...
+            beta,indnorm,Lap,Par.initmethod,Par.thre_stop);
 R = zeros(1,ndims_A+1); % reload the ranks, in case the initial ranks are set larger than required
 R(1) = 1; R(end) = 1;
 for order = 2:ndims_A

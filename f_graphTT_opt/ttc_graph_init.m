@@ -1,4 +1,4 @@
-function [Gcore,X,beta_init] = ttc_graph_init(A_observed,Mask,rank_init,beta,indnorm,Lap,initmethod)
+function [Gcore,X,beta_init,beta_equ] = ttc_graph_init(A_observed,Mask,rank_init,beta,indnorm,Lap,initmethod,thre_stop)
     
     Size_A = size(A_observed);
     ndims_A = ndims(A_observed);
@@ -7,6 +7,18 @@ function [Gcore,X,beta_init] = ttc_graph_init(A_observed,Mask,rank_init,beta,ind
     
     Mask_index = find(Mask~=0);
     %% init Gcore
+    if strcmp(initmethod,'fromVI')
+        A_temp = A_observed./indnorm;
+        [~,~,Lambda,Tau,~,~,~] = VITTC_gh(A_temp,A_temp,Mask,Lap,...
+                        'maxiter',200,...
+                        'maxrank',max(rank_init),...%                         'thre_rankprune',0,... % not prune ranks
+                        'thre_stop',thre_stop,...
+                        'show_info',false);
+        for i = 2:ndims_A
+            R_init(i) = length(Lambda.meaninv{i});
+        end
+    end
+    
     if strcmp(initmethod,'randomize')
         A_guess = normrnd(mean(A_observed(Mask_index)),std(A_observed(Mask_index)),Size_A);% normal random, with A_mean and A_var
     elseif strcmp(initmethod,'ttsvd') || strcmp(initmethod,'fromVI')
@@ -42,14 +54,12 @@ function [Gcore,X,beta_init] = ttc_graph_init(A_observed,Mask,rank_init,beta,ind
     end
     
     %% init beta_init
+    weight = zeros(1,ndims_A);
+    for order = 1:ndims(A_observed)
+        weight(order) = sum(Gcore{order}(:).^2)/R(order)/R(order+1);
+    end
+            
     if strcmp(initmethod,'fromVI') % this one is only for the test of reuse of beta obtained by graphTT-vi
-        A_temp = A_observed./indnorm;
-        [~,~,Lambda,Tau,~,~,~] = VITTC_gh(A_temp,A_temp,Mask,Lap,...
-                        'maxiter',200,...
-                        'maxrank',max(rank_init),...
-                        'thre_rankprune',0,... % not prune ranks
-                        'thre_stop',1e-6,...
-                        'show_info',false);
         beta_init = zeros(1,ndims_A);
         for i = 1:length(beta_init)
             beta_init(i) = majorvote(Lambda.meaninv{i}) ...
@@ -57,15 +67,15 @@ function [Gcore,X,beta_init] = ttc_graph_init(A_observed,Mask,rank_init,beta,ind
                 * Tau.indnorm^(2/ndims_A - 2);
         end
         beta_init = beta_init ./ indnorm^(2/ndims_A-2);
+        beta_init = mean(beta_init).*ones(size(beta_init));
+        beta_equ = beta_init.*weight;
     else
         if isscalar(beta) % set beta_0 only, get the beta_d according to that introduced in the reference paper
-            weight = zeros(1,ndims_A);
-            for order = 1:ndims(A_observed)
-                weight(order) = sum(Gcore{order}(:).^2)/R(order)/R(order+1);
-            end
             beta_init = beta./weight;
+            beta_equ = beta * ones(size(beta_init));
         else
             beta_init = beta; % manually set all beta_d's
+            beta_equ = beta.*weight;
         end
     end
     
