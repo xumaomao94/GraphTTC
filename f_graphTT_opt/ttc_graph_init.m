@@ -67,8 +67,10 @@ function [Gcore,X,beta_init,beta_equ] = ttc_graph_init(A_observed,Mask,rank_init
                 * Tau.indnorm^(2/ndims_A - 2);
         end
         beta_init = beta_init ./ indnorm^(2/ndims_A-2);
-        beta_init = mean(beta_init).*ones(size(beta_init));
-        beta_equ = beta_init.*weight;
+%         beta_init = mean(beta_init).*ones(size(beta_init));
+%         beta_equ = beta_init.*weight;
+        beta_equ = mean(beta_init.*weight)*ones(size(beta_init));
+        beta_init = beta_equ./weight;
     else
         if isscalar(beta) % set beta_0 only, get the beta_d according to that introduced in the reference paper
             beta_init = beta./weight;
