@@ -27,17 +27,19 @@ function [lambda,tau,Gcore] = VITTC_GH_init_graph_ind(A_observed,Mask,Lap,maxran
     end
     Gcore.mean{ndims_A} = reshape(Aremain_M,[R(ndims_A),R(ndims_A+1),Size_A(ndims_A)]);
     
+    
+    smallvalue = 10^(-6);
     % lambda
-    lambda.b = 10^(-6); %0;%10^(-9); %
-    lambda.c =-1;%-10^(-6); -min(Size_A)
+    lambda.b = smallvalue; %0;%10^(-9); %
+    lambda.c = smallvalue;%-1; % %-10^(-6); -min(Size_A)
     
     lambda.a = cell(1,ndims_A+1);
     lambda.a(1) = {1}; lambda.a(ndims_A+1) = {1};
     lambda.a_alpha = cell(1,ndims_A+1); lambda.a_alpha(1) = {1}; lambda.a_alpha(ndims_A+1) = {1};
     lambda.a_beta = cell(1,ndims_A+1); lambda.a_beta(1) = {1}; lambda.a_beta(ndims_A+1) = {1};
     for i = 2:ndims_A
-        lambda.a_alpha(i) = {(10^(-6)-min(0,lambda.c/2))*ones(1,R(i))};
-        lambda.a_beta(i) = {10^(-6)*ones(1,R(i))};
+        lambda.a_alpha(i) = {(smallvalue-min(0,lambda.c/2))*ones(1,R(i))};
+        lambda.a_beta(i) = {smallvalue*ones(1,R(i))};
         lambda.a(i) = {lambda.a_alpha{i}./lambda.a_beta{i}};
     end
     lambda.meaninv = cell(1,ndims_A+1); % for conviency, we set lambda(0) = 1 and lambda(N) = 1. The real lambda(i) is denoted as lambda(i+1) here!
@@ -54,8 +56,8 @@ function [lambda,tau,Gcore] = VITTC_GH_init_graph_ind(A_observed,Mask,Lap,maxran
     end
     
     % tau
-    tau.a = 10^(-6);
-    tau.b = 10^(-6);
+    tau.a = smallvalue;
+    tau.b = smallvalue;
     tau.mean = tau.a/tau.b;
     tau.var = tau.a/(tau.b^2);
     

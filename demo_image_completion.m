@@ -7,7 +7,7 @@ addpath('TestImages')
 addpath('rely')
 
 %% Load the Image
-img_name = 'TestImages\airplane.mat';
+img_name = 'TestImages/airplane.mat';
 load(img_name);
 X = img.*255; % the original 'airplane' image
 
