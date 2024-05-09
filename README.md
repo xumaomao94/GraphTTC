@@ -44,4 +44,4 @@ This is a matlab implemenation of the graph regularized tensor train completion,
 
 ### Reference
 
-Xu, L., Cheng, L., Wong, N., & Wu, Y. C. (2022) To Fold or not to Fold: Graph Regularized Tensor Train for Visual Data Completion. Paper link shall be provided later.
+Xu, L., Cheng, L., Wong, N., & Wu, Y. C. (2022) To Fold or not to Fold: Graph Regularized Tensor Train for Visual Data Completion. Paper link: https://arxiv.org/abs/2306.11123
