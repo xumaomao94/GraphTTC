@@ -29,9 +29,10 @@ function [A_completed,Gcore,Lambda,Tau,rse,rank_estimated,Power] = VITTC_gh(A_ra
 % maxrank (default: 64)
 %       max rank for the TT ranks
 % thre_rank_prune (default: 1e-5)
-%       Slices with (average power/average core power) less than thre_rank_prune will be discarded
+%       - Slices with (average power/average core power) less than thre_rank_prune will be discarded
 %       Recommended value: smaller than 1e-2, e.g., 1e-3, 1e-5
-% thre_stop (default: 1e-7)
+%       - set to 0, not prune ranks
+% thre_stop (default: 1e-6)
 %       stop the iteration when relative square error between current recovered tensor and
 %       last update is smaller than thre_stop
 % show_info (default: false)
@@ -104,7 +105,9 @@ for i = 1:Par.maxiter
     if Par.thre_rankprune >= 0.1 && i == 1
         fprintf('the threshold for rank pruning <thre_rankprune> is not reasonable, better set as values smaller than 1e-2\n')
     end
-    [Gcore,Lambda] = rank_reduce_relative_GH_graph_ind_Power(ndims(A_observed),Gcore,Lambda,Par.thre_rankprune);
+    if Par.thre_rankprune > 0
+        [Gcore,Lambda] = rank_reduce_relative_GH_graph_ind_Power(ndims(A_observed),Gcore,Lambda,Par.thre_rankprune);
+    end
 
     A_completed = tt2full(Gcore,Size_A)./indnorm;
     rse(i) = sumsqr(A_completed-A_raw)/sumsqr(A_raw);
@@ -124,6 +127,7 @@ end
 %% Evaluate
 A_completed = tt2full(Gcore,Size_A);
 A_completed = A_completed./indnorm;
+Tau.indnorm = indnorm;
 rse(end) = sumsqr(A_completed-A_raw)/sumsqr(A_raw);
 
 ndims_A  = ndims(A_observed);

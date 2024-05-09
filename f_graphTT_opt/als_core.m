@@ -35,5 +35,11 @@ for order = 1:ndims_A
     Gcore{order} = reshape(sol,[R(order),R(order+1),size_A(order)]);
 end
 
-
+for order_inv = 2:ndims_A
+    order = ndims_A - order_inv + 1;
+    if order ~= ndims_A
+        X{order} = reshape(permute(Gcore{order+1},[1,3,2]),[R(order+1)*size_A(order+1),R(order+2)]) * X{order+1};
+        X{order} = reshape(X{order},[R(order+1),prod(size_A(order+1:end))]); % [R(d+1), Id+1 ... I(D)]
+    end
+end
 end

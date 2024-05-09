@@ -1,4 +1,4 @@
-function [A_completed,Gcore,rse] = ttc_graph(A_raw,A_observed,Mask,Lap,beta,rank_init,varargin)
+function [A_completed,Gcore,rse,beta_equ] = ttc_graph(A_raw,A_observed,Mask,Lap,beta,rank_init,varargin)
 % ------------------------------------------------------
 % Graph Regularized Tensor Train Completion, solved under the BCD framework.
 % This code realizes the optimization method introduced in the following reference.
@@ -35,7 +35,9 @@ function [A_completed,Gcore,rse] = ttc_graph(A_raw,A_observed,Mask,Lap,beta,rank
 % initmethod (default: 'ttsvd')
 %       -'ttsvd'-> use Gaussian random variables to fill in empty entries
 %       -'randomize'-> all entries are initialized by Gaussian variables
-% thre_stop (default: 1e-8)
+%       -'fromVI'-> initialized from graphTT-vi, using the same initialized
+%       Gcore and the learnt beta
+% thre_stop (default: 1e-6)
 %       stop the iteration when relative square error between current recovered tensor and
 %       last update is smaller than thre_stop
 % update_method (default: 'fiber_als')
@@ -73,7 +75,7 @@ addRequired(p,'beta',@(x) isnumeric(x) && (isscalar(x)||length(x)==ndims(A_obser
 addRequired(p,'rank_init',@(x) isnumeric(x) && length(x)==1+ndims(A_observed));
 
 addOptional(p,'maxiter',defaultPar.Maxiter,@isscalar);
-addOptional(p,'initmethod',defaultPar.InitialMethod,@(x) ismember(x,{'ttsvd','randomize'}));
+addOptional(p,'initmethod',defaultPar.InitialMethod,@(x) ismember(x,{'ttsvd','randomize','fromVI'}));
 addOptional(p,'thre_stop',defaultPar.IterEndThre,@isscalar);
 addOptional(p,'update_method',defaultPar.UpdateMethod,@(x) ismember(x,{'fiber_als','core_als'}));
 addOptional(p,'show_info',defaultPar.ShowInfo,@islogical);
@@ -90,32 +92,26 @@ end
 %% Initialization
 Size_A = size(A_observed);
 ndims_A = ndims(A_observed);
-indnorm = 1/max(A_observed(:));
+indnorm = 1/max(abs(A_observed(:)));
 A_observed = A_observed.*indnorm;
 rse = zeros(1,Par.maxiter+1);
 
-[Gcore,X] = ttc_graph_init(A_observed,Mask,rank_init,Par.initmethod);
+
+[Gcore,X,beta_init,beta_equ] = ttc_graph_init(A_observed,Mask,rank_init,...
+            beta,indnorm,Lap,Par.initmethod,Par.thre_stop);
 R = zeros(1,ndims_A+1); % reload the ranks, in case the initial ranks are set larger than required
 R(1) = 1; R(end) = 1;
 for order = 2:ndims_A
     R(order) = size(Gcore{order-1},2);
 end
 
-if isscalar(beta) % set beta_0 only, get the beta_d according to that introduced in the reference paper
-    weight = zeros(1,ndims_A);
-    for order = 1:ndims(A_observed)
-        weight(order) = sum(Gcore{order}(:).^2)/R(order)/R(order+1);
-    end
-    beta_init = beta./weight;
-else
-    beta_init = beta; % manually set all beta_d's
-end
-
 %% GraphTT-opt algorithm
 A_Ctemp = 0;
 for i = 1:Par.maxiter
     if Par.show_info
-        fprintf('The %d-th iteration; time: %f; ',i,toc)
+        if mod(i,20) == 1
+            fprintf('The %d-th iteration; time: %f; ',i,toc)
+        end
     end
     
     if strcmp(Par.update_method,'fiber_als')
@@ -138,7 +134,9 @@ for i = 1:Par.maxiter
 
     dist = sumsqr(A_completed-A_Ctemp)/sumsqr(A_completed);
     if Par.show_info
-        fprintf('rse between the current and last update: %.9f\n', dist)
+        if mod(i,20) == 1
+            fprintf('rse between the current and last update: %.9f\n', dist)
+        end
     end
     if dist < Par.thre_stop
         if Par.show_info
