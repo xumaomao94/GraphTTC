@@ -1,4 +1,4 @@
-function Tau_update = update_tau_GH_ind(A_observed,Mask,Gcore,Lambda,Tau,V_final,W_final)
+function Tau_update = update_tau_GH_ind(A_observed,Mask,Lambda,Tau,V_final,W_final,E,isOutlier)
     ndims_A = ndims(A_observed);
     size_A = size(A_observed);
     R = zeros(1,ndims_A+1);
@@ -6,7 +6,9 @@ function Tau_update = update_tau_GH_ind(A_observed,Mask,Gcore,Lambda,Tau,V_final
         R(i) = length(Lambda.mean{i});
     end
     
+
     alpha = sum(reshape(Mask,1,[]))/2 + Tau.a;
+    
     beta = Tau.b;
     
 %     gmean = tt2full(Gcore,size_A);
@@ -14,17 +16,25 @@ function Tau_update = update_tau_GH_ind(A_observed,Mask,Gcore,Lambda,Tau,V_final
 %         1/2*sum(reshape(A_observed.^2.*Mask,[],1)) - ...
 %         sum(reshape(A_observed.*gmean.*Mask,[],1));
     
-
     gmean = W_final;
     gcor = V_final;
     M_2vec = Mask(:);
     A_2vec = A_observed(:);
-    beta = beta + 1/2*M_2vec'*(A_2vec.*A_2vec+gcor-2*A_2vec.*gmean);
+
+
+    if ~isOutlier
+        beta = beta + 1/2*M_2vec'*(A_2vec.*A_2vec+gcor-2*A_2vec.*gmean);
+    else
+        Emean_2vec = E.mean(:);
+        AminusE_2vec = A_2vec - Emean_2vec;
+        Evar_2vec = E.var(:);
+        beta = beta + 1/2*M_2vec'*( AminusE_2vec.*AminusE_2vec + Evar_2vec ...
+            + gcor - 2*AminusE_2vec.*gmean );
+    end
     
     
     Tau.mean = alpha/beta;
     Tau.var = alpha/(beta^2);
     Tau_update = Tau;
-
 
 end

@@ -1,4 +1,4 @@
-function [lambda,tau,Gcore] = VITTC_GH_init_graph_ind(A_observed,Mask,Lap,maxrank,initmethod)
+function [lambda,tau,Gcore,E,T] = VITTC_GH_init_graph_ind(A_observed,Mask,Lap,maxrank,initmethod,isOutlier)
     Size_A = size(A_observed);
     ndims_A = ndims(A_observed);
 
@@ -68,4 +68,17 @@ function [lambda,tau,Gcore] = VITTC_GH_init_graph_ind(A_observed,Mask,Lap,maxran
             end
         end
     end
+
+    % E and T
+    if ~isOutlier
+        E.mean = 0;
+        T.mean = 0;
+    else
+        T.a = smallvalue * ones(Size_A);
+        T.b = smallvalue * ones(Size_A);
+        T.mean = T.a ./ T.b;
+        E.mean = zeros(Size_A);
+        E.var = 1./T.mean;
+    end
+
 end

@@ -4,7 +4,7 @@ function [A_completed,Gcore,rse,beta_equ] = ttc_graph(A_raw,A_observed,Mask,Lap,
 % This code realizes the optimization method introduced in the following reference.
 % 
 % Reference
-%
+% 
 % ------------------Input------------------
 % A_raw
 %       The original tensor data, only used for performance test, use
@@ -30,6 +30,9 @@ function [A_completed,Gcore,rse,beta_equ] = ttc_graph(A_raw,A_observed,Mask,Lap,
 % rank_init
 %       The initialized TT ranks, must follow the structure
 %       [1,r2,...,rD,1], which is with length (1+dimension of the observed tensor)
+% betaE
+%       The regularization parameter for sparsity of outliers
+%       -set as 0 to indicate there is no outlier
 % maxiter (default: 100)
 %       Max number of iterations for the als update
 % initmethod (default: 'ttsvd')
@@ -60,6 +63,7 @@ function [A_completed,Gcore,rse,beta_equ] = ttc_graph(A_raw,A_observed,Mask,Lap,
 % ------------------------------------------------------
 %%  read/set parameters
 p = inputParser;
+defaultPar.betaE = 0;
 defaultPar.Maxiter = 100;
 defaultPar.InitialMethod = 'ttsvd';
 defaultPar.IterEndThre = 1e-6;
@@ -74,6 +78,7 @@ addRequired(p,'Lap',@(x) iscell(x) && length(x)==ndims(A_observed));
 addRequired(p,'beta',@(x) isnumeric(x) && (isscalar(x)||length(x)==ndims(A_observed)));
 addRequired(p,'rank_init',@(x) isnumeric(x) && length(x)==1+ndims(A_observed));
 
+addOptional(p,'betaE',defaultPar.betaE, @isscalar);
 addOptional(p,'maxiter',defaultPar.Maxiter,@isscalar);
 addOptional(p,'initmethod',defaultPar.InitialMethod,@(x) ismember(x,{'ttsvd','randomize','fromVI'}));
 addOptional(p,'thre_stop',defaultPar.IterEndThre,@isscalar);
@@ -99,6 +104,9 @@ rse = zeros(1,Par.maxiter+1);
 
 [Gcore,X,beta_init,beta_equ] = ttc_graph_init(A_observed,Mask,rank_init,...
             beta,indnorm,Lap,Par.initmethod,Par.thre_stop);
+if Par.betaE ~= 0
+    E = zeros(Size_A);
+end
 R = zeros(1,ndims_A+1); % reload the ranks, in case the initial ranks are set larger than required
 R(1) = 1; R(end) = 1;
 for order = 2:ndims_A
@@ -115,13 +123,30 @@ for i = 1:Par.maxiter
     end
     
     if strcmp(Par.update_method,'fiber_als')
-        [Gcore,X] = als_fiber(A_observed,Mask,Gcore,Lap,beta_init,X);
+        if Par.betaE == 0
+            [Gcore,X] = als_fiber(A_observed,Mask,Gcore,Lap,beta_init,X);
+        else
+            [Gcore,X] = als_fiber(A_observed-E,Mask,Gcore,Lap,beta_init,X);
+        end
     elseif strcmp(Par.update_method,'core_als')
-        [Gcore,X] = als_core(A_observed,Mask,Gcore,Lap,beta_init,X);
+        if Par.betaE == 0
+            [Gcore,X] = als_core(A_observed,Mask,Gcore,Lap,beta_init,X);
+        else
+            [Gcore,X] = als_core(A_observed-E,Mask,Gcore,Lap,beta_init,X);
+        end
     end
     
-    
-    A_completed = tt2full_4ttc(Gcore,Size_A)./indnorm;
+    A_completed = tt2full_4ttc(Gcore,Size_A);
+    if Par.betaE == 0
+        A_completed = A_completed ./ indnorm;
+    else
+        E_temp = Mask.*(A_observed - A_completed);
+        E = soft_thresh(E_temp,Par.betaE/2);
+        A_completed = (A_completed + E) ./ indnorm;
+    end
+
+
+    % A_completed = tt2full_4ttc(Gcore,Size_A)./indnorm;
     
     rse(i) = sumsqr(A_completed-A_raw)/sumsqr(A_raw);
 %     objfun = sumsqr(S.*(A_completed-A_raw));
@@ -150,4 +175,8 @@ end
 %% Evaluate
 A_completed = tt2full_4ttc(Gcore,Size_A)./indnorm;
 rse(end) = sumsqr(A_completed-A_raw)/sumsqr(A_raw);
+end
+
+function y = soft_thresh(x, beta)
+    y = sign(x) .* max(abs(x) - beta, 0);
 end

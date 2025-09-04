@@ -4,6 +4,10 @@
 
 This is a matlab implemenation of the graph regularized tensor train completion, which optimizes one TT core fiber in each subproblem instead of a TT core. Both GraphTT-opt and GraphTT-vi are included, along with a demo on image completion.
 
+### Update
+
+We also included the modeling for outliers.
+
 ## Functions
 
 - demo_image_completion.m

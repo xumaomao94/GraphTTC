@@ -35,6 +35,10 @@ function [A_completed,Gcore,Lambda,Tau,rse,rank_estimated,Power] = VITTC_gh(A_ra
 % thre_stop (default: 1e-6)
 %       stop the iteration when relative square error between current recovered tensor and
 %       last update is smaller than thre_stop
+% outliers_exist (default: False)
+%       whether to consider outliers
+%       - True -> yes
+%       - False(default) -> no
 % show_info (default: false)
 %       -true -> print information during the algorithm
 %       -false -> not to print
@@ -64,6 +68,7 @@ defaultPar.InitialMethod = 'ttsvd';
 defaultPar.MaxRank = 64;
 defaultPar.RankPruneThre = 1e-5;
 defaultPar.IterEndThre = 1e-6;
+defaultPar.IsOutlier = false;
 defaultPar.ShowInfo = false;
 
 addRequired(p,'A_raw',@isnumeric);
@@ -73,6 +78,7 @@ addRequired(p,'Lap',@(x) iscell(x) && length(x)==ndims(A_observed));
 addOptional(p,'maxiter',defaultPar.Maxiter,@isscalar);
 addOptional(p,'initmethod',defaultPar.InitialMethod,@(x) ismember(x,{'ttsvd','randomize'}));
 addOptional(p,'maxrank',defaultPar.MaxRank,@isscalar);
+addOptional(p,'isOutlier',defaultPar.IsOutlier,@islogical);
 addOptional(p,'thre_rankprune',defaultPar.RankPruneThre,@isscalar);
 addOptional(p,'thre_stop',defaultPar.IterEndThre,@isscalar);
 addOptional(p,'show_info',defaultPar.ShowInfo,@islogical);
@@ -87,10 +93,10 @@ end
 
 %% initialization
 Size_A = size(A_observed);
-indnorm = 10^(ndims(A_observed)-1)/max( abs(reshape(A_observed,[],1)) );
+indnorm = 10^(ndims(A_observed)-1)/max( abs(reshape(A_observed,[],1)) ); %sum( abs(reshape(A_observed,[],1)) )*sum(Mask(:));%
 A_observed = A_observed.*indnorm;
 rse = zeros(1,Par.maxiter+1);
-[Lambda,Tau,Gcore] = VITTC_GH_init_graph_ind(A_observed,Mask,Lap,Par.maxrank,Par.initmethod);
+[Lambda,Tau,Gcore,E,T] = VITTC_GH_init_graph_ind(A_observed,Mask,Lap,Par.maxrank,Par.initmethod,Par.isOutlier);
 
 %% VI update
 A_Ctemp = 0;
@@ -99,17 +105,30 @@ for i = 1:Par.maxiter
         fprintf('Iteration: %d; Time: %f; ',i,toc)
     end
     
-    [Gcore,V_final,W_final] = update_gcore_GH_graph_ind(A_observed,Mask,Gcore,Lambda,Tau,Lap);
-    Lambda = update_lambda_GH_graph_ind(A_observed,Gcore,Lambda,Tau,Lap);
-    Tau = update_tau_GH_ind(A_observed,Mask,Gcore,Lambda,Tau,V_final,W_final);
-    if Par.thre_rankprune >= 0.1 && i == 1
+    if ~Par.isOutlier
+        [Gcore,V_final,W_final] = update_gcore_GH_graph_ind(A_observed,Mask,Gcore,Lambda,Tau,Lap);
+        Lambda = update_lambda_GH_graph_ind(A_observed,Gcore,Lambda,Tau,Lap);
+        Tau = update_tau_GH_ind(A_observed,Mask,Lambda,Tau,V_final,W_final,E,Par.isOutlier);
+    else
+        [Gcore,V_final,W_final] = update_gcore_GH_graph_ind(A_observed-E.mean,Mask,Gcore,Lambda,Tau,Lap);
+        Lambda = update_lambda_GH_graph_ind(A_observed,Gcore,Lambda,Tau,Lap);
+        [E,T] = update_ET_ind(A_observed,Mask,Tau,W_final,E,T);
+        Tau = update_tau_GH_ind(A_observed,Mask,Lambda,Tau,V_final,W_final,E,Par.isOutlier);
+    end
+    if i == 1 && Par.thre_rankprune >= 0.1
         fprintf('the threshold for rank pruning <thre_rankprune> is not reasonable, better set as values smaller than 1e-2\n')
     end
     if Par.thre_rankprune > 0
         [Gcore,Lambda] = rank_reduce_relative_GH_graph_ind_Power(ndims(A_observed),Gcore,Lambda,Par.thre_rankprune);
     end
 
-    A_completed = tt2full(Gcore,Size_A)./indnorm;
+    E.mean( abs(E.mean) < max(abs(E.mean))/10 ) = 0;
+
+    if ~Par.isOutlier
+        A_completed = tt2full(Gcore,Size_A)./indnorm;
+    else
+        A_completed = (tt2full(Gcore,Size_A) + E.mean)./indnorm;
+    end
     rse(i) = sumsqr(A_completed-A_raw)/sumsqr(A_raw);
     dist = sumsqr(A_completed(:)-A_Ctemp(:))/sumsqr(A_completed(:));
     if Par.show_info
@@ -125,7 +144,7 @@ for i = 1:Par.maxiter
 end
 
 %% Evaluate
-A_completed = tt2full(Gcore,Size_A);
+A_completed = tt2full(Gcore,Size_A);% + E.mean;
 A_completed = A_completed./indnorm;
 Tau.indnorm = indnorm;
 rse(end) = sumsqr(A_completed-A_raw)/sumsqr(A_raw);

@@ -15,14 +15,21 @@ missing_rate = 90;
 Mask = binornd(1,1-missing_rate/100,size(X));
 
 IfNoiseOn = false;
-noise_var = 0.01;
+Noise_type = 'salt & pepper'; % 'Gaussian'; % 
 
 if IfNoiseOn
-    % add Gaussian noise of mean 0 and variance 0.01 on the original image
-    X_noise = imnoise(img,'gaussian',0,0.01).*255;
+    if strcmp(Noise_type, 'Gaussian') % add Gaussian noise of mean 0 and variance 0.01 on the original image
+        noise_var = 0.01;
+        outlier_rate = 0;
+        X_noise = imnoise(img,'gaussian',0,noise_var).*255;
+    elseif strcmp(Noise_type, 'salt & pepper') % add 10\% salt and pepper noise
+        outlier_rate = 0.1;
+        X_noise = imnoise(img, 'salt & pepper', outlier_rate).* 255;
+    end
     Y = X_noise .* Mask;
 else
     Y = X .* Mask;
+    outlier_rate = 0;
 end
 
 %% Graph Laplacian
@@ -52,16 +59,31 @@ for ell = 1:ndims(Y)
 end
 
 %% Perform graphTT-opt or graphTT-VI
-% MethodName = 'graphTTvi'; % 'graphTTopt' for the optimization based methods
-MethodName = 'graphTTopt';
+MethodName = 'graphTTvi'; % 'graphTTopt' for the optimization based methods
+% MethodName = 'graphTTopt';
+
+IsOutlier = (outlier_rate ~= 0);
 if strcmp(MethodName,'graphTTvi')
     [A_completed] = VITTC_gh(Y,Y,Mask,Lap,...
                                 'maxiter',50,...
+                                'isOutlier',IsOutlier,...
                                 'show_info',true);
 elseif strcmp(MethodName,'graphTTopt')
-    beta_0 = 2;
+    if IfNoiseOn
+        if outlier_rate ~= 0 % for salt-and-pepper noise
+            beta_0 = 2;
+            betaE = 0.01;
+        else % use the following for Gaussian noise
+            beta_0 = 100;
+            betaE = 0;
+        end
+    else
+        beta_0 = 2;
+        betaE = 0;
+    end
     rank_init = [1,64,3,1];
     [A_completed] = ttc_graph(Y,Y,Mask,Lap,beta_0,rank_init,...
+                                'betaE',betaE,...
                                 'show_info',true);
 end
 
@@ -76,9 +98,10 @@ subplot(1,3,1); imshow(X./255);
 subplot(1,3,2); imshow(Y./255);
 subplot(1,3,3); imshow(A_completed./255);
 
-if IfNoiseOn
-    save_name = sprintf('airplane_mr%d_noisy_%s.mat',missing_rate,MethodName);
-else
-    save_name = sprintf('airplane_mr%d_clean_%s.mat',missing_rate,MethodName);
-end
-save(save_name,'X_VITT','rse','psnr','ssim')
+fprintf('PSNR: %.2f, SSIM: %.3f\n', psnr, ssim);
+% if IfNoiseOn
+%     save_name = sprintf('airplane_mr%d_noisy_%s.mat',missing_rate,MethodName);
+% else
+%     save_name = sprintf('airplane_mr%d_clean_%s.mat',missing_rate,MethodName);
+% end
+% save(save_name,'A_completed','rse','psnr','ssim')
