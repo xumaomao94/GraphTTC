@@ -2,7 +2,15 @@
 
 ## Introduction
 
-This is a matlab implemenation of the graph regularized tensor train completion, which optimizes one TT core fiber in each subproblem instead of a TT core. Both GraphTT-opt and GraphTT-vi are included, along with a demo on image completion.
+This is a matlab implemenation of the graph regularized tensor train completion, which optimizes one TT core fiber in each subproblem 
+instead of a TT core. Both GraphTT-opt and GraphTT-vi are included, along with a demo on image completion.
+An illustration of our methods: 
+
+![Recovery under 40% sampling (no noise)](ExperimentalResults/60missing.png)
+*Recovery under 40% sampling and no noise*
+
+![Recovery under 40% sampling with noise](ExperimentalResults/60missingN.png)
+*Recovery under 40% sampling and 10% salt and pepper noise*
 
 ### Update
 
