@@ -6,11 +6,14 @@ This is a matlab implemenation of the graph regularized tensor train completion,
 instead of a TT core. Both GraphTT-opt and GraphTT-vi are included, along with a demo on image completion.
 An illustration of our methods: 
 
-![Recovery under 40% sampling (no noise)](ExperimentalResults/60missing.png)
-*Recovery under 40% sampling and no noise*
+![Data and noise](ExperimentalResults/illu_data.png)
+*Data and noise*
 
-![Recovery under 40% sampling with noise](ExperimentalResults/60missingN.png)
-*Recovery under 40% sampling and 10% salt and pepper noise*
+![Recovery under 40% sampling rate](ExperimentalResults/illu_40.png)
+*Recovery under 40% sampling rate*
+
+![Recovery under 20% sampling rate](ExperimentalResults/illu_20.png)
+*Recovery under 20% sampling rate*
 
 ### Update
 
