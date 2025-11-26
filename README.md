@@ -59,4 +59,5 @@ We also included the modeling for outliers.
 
 ### Reference
 
-Xu, L., Cheng, L., Wong, N., & Wu, Y. C. (2022) To Fold or not to Fold: Graph Regularized Tensor Train for Visual Data Completion. Paper link: https://arxiv.org/abs/2306.11123
+Xu, L., Cheng, L., Wong, N., & Wu, Y. C. (2025). *To Fold or Not to Fold: Graph Regularized Tensor Train for Visual Data Completion. IEEE Transactions on Pattern Analysis and Machine Intelligence.* Paper link: https://arxiv.org/abs/2306.11123
+
